@@ -22,6 +22,7 @@ typedef __half2 half2;
 
 #include <common.h>
 #include "lhiputil.h"
+#include "mix_kernels_hip.h"
 
 #define ELEMENTS_PER_THREAD (8)
 
@@ -129,53 +130,131 @@ void runbench(double* cd, long size) {
 
   constexpr auto total_bench_iterations = 3;
 
-  float kernel_time_mad_sp = benchmark<total_bench_iterations>([&]() {
+  float kernel_time_mad_sp = 0;
+  if (g_cal_sp > 0) {
+    // kernel_time_mad_sp = benchmark<total_bench_iterations>([&]() {
+    //   initializeEvents_ext(&start, &stop);
+    //   hipExtLaunchKernelGGL(
+    //       HIP_KERNEL_NAME(benchmark_func<float, BLOCK_SIZE, ELEMENTS_PER_THREAD,
+    //                                     compute_iterations>),
+    //       dim3(dimGrid), dim3(dimBlock), 0, 0, start, stop, 0, 1.0f, (float*)cd);
+    //   return finalizeEvents_ext(start, stop);
+    // });
+
     initializeEvents_ext(&start, &stop);
     hipExtLaunchKernelGGL(
         HIP_KERNEL_NAME(benchmark_func<float, BLOCK_SIZE, ELEMENTS_PER_THREAD,
-                                       compute_iterations>),
+                                      compute_iterations>),
         dim3(dimGrid), dim3(dimBlock), 0, 0, start, stop, 0, 1.0f, (float*)cd);
-    return finalizeEvents_ext(start, stop);
-  });
+    kernel_time_mad_sp = finalizeEvents_ext(start, stop);
 
-  float kernel_time_mad_sp2 = benchmark<total_bench_iterations>([&]() {
+    if (kernel_time_mad_sp > 0) {
+      g_kernel_time_mad_sp_t += kernel_time_mad_sp;
+      g_computations_sp      += (double)computations;
+    }
+  }
+  
+  float kernel_time_mad_sp2 = 0;
+  if (g_cal_sp2) {
+    // kernel_time_mad_sp2 = benchmark<total_bench_iterations>([&]() {
+    //   initializeEvents_ext(&start, &stop);
+    //   hipExtLaunchKernelGGL(
+    //       HIP_KERNEL_NAME(benchmark_func<float2, BLOCK_SIZE, ELEMENTS_PER_THREAD,
+    //                                     compute_iterations>),
+    //       dim3(dimGrid), dim3(dimBlock), 0, 0, start, stop, 0, float2{1.0f},
+    //       (float2*)cd);
+    //   return finalizeEvents_ext(start, stop);
+    // });
+
     initializeEvents_ext(&start, &stop);
     hipExtLaunchKernelGGL(
         HIP_KERNEL_NAME(benchmark_func<float2, BLOCK_SIZE, ELEMENTS_PER_THREAD,
-                                       compute_iterations>),
+                                      compute_iterations>),
         dim3(dimGrid), dim3(dimBlock), 0, 0, start, stop, 0, float2{1.0f},
         (float2*)cd);
-    return finalizeEvents_ext(start, stop);
-  });
+    kernel_time_mad_sp2 = finalizeEvents_ext(start, stop);
 
-  float kernel_time_mad_dp = benchmark<total_bench_iterations>([&]() {
+    if (kernel_time_mad_sp2 > 0) {
+      g_kernel_time_mad_sp2_t += kernel_time_mad_sp2;
+      g_computations_sp2      += (double)2 * computations;
+    }
+  }
+
+  float kernel_time_mad_dp = 0;
+  if (g_cal_dp) {
+    // kernel_time_mad_dp = benchmark<total_bench_iterations>([&]() {
+    //   initializeEvents_ext(&start, &stop);
+    //   hipExtLaunchKernelGGL(
+    //       HIP_KERNEL_NAME(benchmark_func<double, BLOCK_SIZE, ELEMENTS_PER_THREAD,
+    //                                     compute_iterations>),
+    //       dim3(dimGrid), dim3(dimBlock), 0, 0, start, stop, 0, 1.0, cd);
+    //   return finalizeEvents_ext(start, stop);
+    // });
+    
     initializeEvents_ext(&start, &stop);
     hipExtLaunchKernelGGL(
         HIP_KERNEL_NAME(benchmark_func<double, BLOCK_SIZE, ELEMENTS_PER_THREAD,
-                                       compute_iterations>),
+                                      compute_iterations>),
         dim3(dimGrid), dim3(dimBlock), 0, 0, start, stop, 0, 1.0, cd);
-    return finalizeEvents_ext(start, stop);
-  });
+    kernel_time_mad_dp = finalizeEvents_ext(start, stop);
 
-  float kernel_time_mad_hp = benchmark<total_bench_iterations>([&]() {
+    if (kernel_time_mad_dp > 0) {
+      g_kernel_time_mad_dp_t += kernel_time_mad_dp;
+      g_computations_dp      += (double)computations;
+    }
+  }
+
+  float kernel_time_mad_hp = 0;
+  if (g_cal_hp) {
+    // kernel_time_mad_hp = benchmark<total_bench_iterations>([&]() {
+    //   initializeEvents_ext(&start, &stop);
+    //   half2 h_ones(1.0f);
+    //   hipExtLaunchKernelGGL(
+    //       HIP_KERNEL_NAME(benchmark_func<half2, BLOCK_SIZE, ELEMENTS_PER_THREAD,
+    //                                     compute_iterations>),
+    //       dim3(dimGrid), dim3(dimBlock), 0, 0, start, stop, 0, h_ones,
+    //       (half2*)cd);
+    //   return finalizeEvents_ext(start, stop);
+    // });
+
     initializeEvents_ext(&start, &stop);
     half2 h_ones(1.0f);
     hipExtLaunchKernelGGL(
         HIP_KERNEL_NAME(benchmark_func<half2, BLOCK_SIZE, ELEMENTS_PER_THREAD,
-                                       compute_iterations>),
+                                      compute_iterations>),
         dim3(dimGrid), dim3(dimBlock), 0, 0, start, stop, 0, h_ones,
         (half2*)cd);
-    return finalizeEvents_ext(start, stop);
-  });
+    kernel_time_mad_hp = finalizeEvents_ext(start, stop);
 
-  float kernel_time_mad_int = benchmark<total_bench_iterations>([&]() {
+    if (kernel_time_mad_hp > 0) {
+      g_kernel_time_mad_hp_t += kernel_time_mad_hp;
+      g_computations_hp      += (double)2 * computations;
+    }
+  }
+
+  float kernel_time_mad_int = 0;
+  if (g_cal_int) {
+    // kernel_time_mad_int = benchmark<total_bench_iterations>([&]() {
+    //   initializeEvents_ext(&start, &stop);
+    //   hipExtLaunchKernelGGL(
+    //       HIP_KERNEL_NAME(benchmark_func<int, BLOCK_SIZE, ELEMENTS_PER_THREAD,
+    //                                     compute_iterations>),
+    //       dim3(dimGrid), dim3(dimBlock), 0, 0, start, stop, 0, 1, (int*)cd);
+    //   return finalizeEvents_ext(start, stop);
+    // });
+
     initializeEvents_ext(&start, &stop);
     hipExtLaunchKernelGGL(
         HIP_KERNEL_NAME(benchmark_func<int, BLOCK_SIZE, ELEMENTS_PER_THREAD,
-                                       compute_iterations>),
+                                      compute_iterations>),
         dim3(dimGrid), dim3(dimBlock), 0, 0, start, stop, 0, 1, (int*)cd);
-    return finalizeEvents_ext(start, stop);
-  });
+    kernel_time_mad_int = finalizeEvents_ext(start, stop);
+
+    if (kernel_time_mad_int > 0) {
+      g_kernel_time_mad_int_t += kernel_time_mad_int;
+      g_computations_int      += (double)computations;
+    }
+  }
 
   printf(
       "         %4d,   %8.3f,%8.2f,%8.2f,%7.2f,   %8.3f,%8.2f,%8.2f,%7.2f,   "
@@ -217,6 +296,7 @@ void runbench(double* cd, long size) {
           (double)(1000 * 1000 * 1000),
       ((double)memoryoperations * sizeof(int)) / kernel_time_mad_int * 1000. /
           (1000. * 1000. * 1000.));
+  fflush(stdout);
 }
 
 extern "C" void mixbenchGPU(double* c, long size) {
@@ -253,44 +333,53 @@ extern "C" void mixbenchGPU(double* c, long size) {
 
   runbench_warmup(cd, size);
 
-  runbench<0>(cd, size);
-  runbench<1>(cd, size);
-  runbench<2>(cd, size);
-  runbench<3>(cd, size);
-  runbench<4>(cd, size);
-  runbench<5>(cd, size);
-  runbench<6>(cd, size);
-  runbench<7>(cd, size);
-  runbench<8>(cd, size);
-  runbench<9>(cd, size);
-  runbench<10>(cd, size);
-  runbench<11>(cd, size);
-  runbench<12>(cd, size);
-  runbench<13>(cd, size);
-  runbench<14>(cd, size);
-  runbench<15>(cd, size);
-  runbench<16>(cd, size);
-  runbench<17>(cd, size);
-  runbench<18>(cd, size);
-  runbench<20>(cd, size);
-  runbench<22>(cd, size);
-  runbench<24>(cd, size);
-  runbench<28>(cd, size);
-  runbench<32>(cd, size);
-  runbench<40>(cd, size);
-  runbench<48>(cd, size);
-  runbench<56>(cd, size);
-  runbench<64>(cd, size);
-  runbench<80>(cd, size);
-  runbench<96>(cd, size);
-  runbench<128>(cd, size);
-  runbench<256>(cd, size);
-  runbench<512>(cd, size);
+  // runbench<0>(cd, size);
+  // runbench<1>(cd, size);
+  // runbench<2>(cd, size);
+  // runbench<3>(cd, size);
+  // runbench<4>(cd, size);
+  // runbench<5>(cd, size);
+  // runbench<6>(cd, size);
+  // runbench<7>(cd, size);
+  // runbench<8>(cd, size);
+  // runbench<9>(cd, size);
+  // runbench<10>(cd, size);
+  // runbench<11>(cd, size);
+  // runbench<12>(cd, size);
+  // runbench<13>(cd, size);
+  // runbench<14>(cd, size);
+  // runbench<15>(cd, size);
+  // runbench<16>(cd, size);
+  // runbench<17>(cd, size);
+  // runbench<18>(cd, size);
+  // runbench<20>(cd, size);
+  // runbench<22>(cd, size);
+  // runbench<24>(cd, size);
+  // runbench<28>(cd, size);
+  // runbench<32>(cd, size);
+  // runbench<40>(cd, size);
+  // runbench<48>(cd, size);
+  // runbench<56>(cd, size);
+  // runbench<64>(cd, size);
+  // runbench<80>(cd, size);
+  // runbench<96>(cd, size);
+  // runbench<128>(cd, size);
+  // runbench<256>(cd, size);
 
+  for (int i = 0; i < g_loop; i++) {
+    runbench<512>(cd, size);
+  }
+  
   printf(
       "------------------------------------------------------------------------"
       "------------------------------------------------------------------------"
       "----------------------------------------------------------\n");
+
+  printf("sp : %f %8.3fs %8.3f \n", g_computations_sp , g_kernel_time_mad_sp_t  / 1000, g_computations_sp  / g_kernel_time_mad_sp_t  * 1000. / (double)(1000 * 1000 * 1000));
+  printf("sp2: %f %8.3fs %8.3f \n", g_computations_sp2, g_kernel_time_mad_sp2_t / 1000, g_computations_sp2 / g_kernel_time_mad_sp2_t * 1000. / (double)(1000 * 1000 * 1000));
+  printf("dp : %f %8.3fs %8.3f \n", g_computations_dp , g_kernel_time_mad_dp_t  / 1000, g_computations_dp  / g_kernel_time_mad_dp_t  * 1000. / (double)(1000 * 1000 * 1000));
+  printf("hp : %f %8.3fs %8.3f \n", g_computations_hp , g_kernel_time_mad_hp_t  / 1000, g_computations_hp  / g_kernel_time_mad_hp_t  * 1000. / (double)(1000 * 1000 * 1000));
+  printf("int: %f %8.3fs %8.3f \n", g_computations_int, g_kernel_time_mad_int_t / 1000, g_computations_int / g_kernel_time_mad_int_t * 1000. / (double)(1000 * 1000 * 1000));
 
   // Copy results back to host memory
   HIP_SAFE_CALL(hipMemcpy(c, cd, size * sizeof(double), hipMemcpyDeviceToHost));
